@@ -4,33 +4,28 @@ from langchain_core.prompts import PromptTemplate
 def generate_answer(question, context, api_key):
     llm = ChatGroq(
         model="llama-3.1-8b-instant", 
-        temperature=0, # Dropped to 0 for maximum strictness
+        temperature=0, 
         groq_api_key=api_key
     )
     
+    # We remove the "STOP ALL ANALYSIS" hard-block to prevent false negatives
     template = """
-    ROLE: You are an Expert Insurance Auditor. 
+    ROLE: You are an Expert Insurance Auditor.
     
-    CRITICAL STEP 1: VALIDATION
-    Analyze the CONTEXT. Is this an Insurance Policy, Claim, or Medical Report?
-    - Indicators of a valid document: Mentions of "Insurer", "Policyholder", "Sum Insured", "Exclusions", "Waiting Periods", or "UIN" codes.
-    - If the document is clearly a school assignment, menu, or non-insurance text: 
-      REPLY ONLY: "❌ INVALID DOCUMENT: This document is not an insurance policy. Please upload a valid insurance file."
-      STOP ALL ANALYSIS.
-    
-    - If it IS insurance-related: Proceed to Phase 2.
+    INSTRUCTIONS:
+    1. Look for keywords like "Exclusion", "Waiting Period", "Sum Insured", or "Policy" in the context.
+    2. If the context is clearly unrelated to insurance (e.g. a recipe or math), say: "This document does not seem to contain insurance rules."
+    3. If it IS insurance, answer the question accurately.
+    4. For the Glaucoma/Surgery question: Check the 'Specific Waiting Period' table.
+    5. Cite the exact page and any 'Excl' codes found.
 
-    PHASE 2: DYNAMIC AUDIT
-    Provide a professional Audit Report for the user's question:
-    1. CATEGORY: Identify if the surgery/condition is "Specified" or "Pre-existing".
-    2. TIMELINE: Check the waiting period (e.g., 12/24/36/48 months).
-    3. CITATION: Use [Page X] for every rule.
-    4. VERDICT: State APPROVED or REJECTED based on the 14-month timeframe vs the policy rule.
+    CONTEXT: 
+    {context}
 
-    CONTEXT: {context}
-    USER QUESTION: {question}
+    USER QUESTION: 
+    {question}
 
-    FINAL RESPONSE:
+    FINAL AUDIT REPORT:
     """
 
     prompt = PromptTemplate(template=template, input_variables=["context", "question"])
