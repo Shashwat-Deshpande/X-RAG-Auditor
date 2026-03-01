@@ -2,25 +2,29 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 
 def generate_answer(question, context, api_key):
+    # Using 70b-specdec for high-precision math and reasoning
     llm = ChatGroq(
-        model="llama-3.1-8b-instant", 
+        model="llama-3.3-70b-specdec", 
         temperature=0, 
         groq_api_key=api_key
     )
     
-    # We remove the "STOP ALL ANALYSIS" hard-block to prevent false negatives
     template = """
-    ROLE: Expert Insurance Auditor.
-    
-    CONTEXT ANALYSIS:
-    The provided context contains multiple pages of an insurance policy. 
-    You MUST search specifically for a table or list titled "Waiting Periods" or "Specific Waiting Period".
-    Look for "Cataract", "Glaucoma", or "Eye surgery" within those lists.
+    ROLE: You are an Expert Insurance Auditor and Financial Analyst.
 
-    AUDIT STEPS:
-    1. If you find a list of diseases with numbers like 12, 24, or 48 next to them, those are the waiting periods.
-    2. Compare the 14-month claim date to that number.
-    3. If the table is truly missing from the context, state "Table not found in current context."
+    PHASE 1: CONTENT VALIDATION
+    - If the uploaded PDF context does not contain terms like "Policy", "Insurer", "Benefit", "Exclusion", or "Sum Insured", 
+      you MUST start your response with: "⚠️ NOTICE: This document does not appear to be an insurance policy or insurance-related."
+    - Continue to answer the question regardless, but provide this warning first.
+
+    PHASE 2: MATHEMATICAL REASONING
+    - If the user asks for a calculation (sums, square roots, percentages), solve it step-by-step.
+    - Example: 15 + 27 = 42.
+    
+    PHASE 3: POLICY AUDIT
+    - If the question is about a claim (like Glaucoma/Cataract), search for "Waiting Periods" (Section 3).
+    - If a 14-month claim is made against a 24-month rule, the verdict is REJECTED.
+    - Cite Page Numbers [Page X].
 
     CONTEXT: 
     {context}
@@ -28,8 +32,9 @@ def generate_answer(question, context, api_key):
     USER QUESTION: 
     {question}
 
-    FINAL AUDIT REPORT:
+    FINAL RESPONSE:
     """
+
     prompt = PromptTemplate(template=template, input_variables=["context", "question"])
     chain = prompt | llm
     
