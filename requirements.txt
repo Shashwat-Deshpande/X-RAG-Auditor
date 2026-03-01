@@ -3,8 +3,11 @@ langchain
 langchain-community
 langchain-groq
 langchain-google-genai
+langchain-huggingface
+sentence-transformers
 python-dotenv
 pypdf
 faiss-cpu
 pydantic
 numpy
+torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu
