@@ -10,14 +10,17 @@ def generate_answer(question, context, api_key):
     
     # We remove the "STOP ALL ANALYSIS" hard-block to prevent false negatives
     template = """
-    ROLE: You are an Expert Insurance Auditor.
+    ROLE: Expert Insurance Auditor.
     
-    INSTRUCTIONS:
-    1. Look for keywords like "Exclusion", "Waiting Period", "Sum Insured", or "Policy" in the context.
-    2. If the context is clearly unrelated to insurance (e.g. a recipe or math), say: "This document does not seem to contain insurance rules."
-    3. If it IS insurance, answer the question accurately.
-    4. For the Glaucoma/Surgery question: Check the 'Specific Waiting Period' table.
-    5. Cite the exact page and any 'Excl' codes found.
+    CONTEXT ANALYSIS:
+    The provided context contains multiple pages of an insurance policy. 
+    You MUST search specifically for a table or list titled "Waiting Periods" or "Specific Waiting Period".
+    Look for "Cataract", "Glaucoma", or "Eye surgery" within those lists.
+
+    AUDIT STEPS:
+    1. If you find a list of diseases with numbers like 12, 24, or 48 next to them, those are the waiting periods.
+    2. Compare the 14-month claim date to that number.
+    3. If the table is truly missing from the context, state "Table not found in current context."
 
     CONTEXT: 
     {context}
@@ -27,7 +30,6 @@ def generate_answer(question, context, api_key):
 
     FINAL AUDIT REPORT:
     """
-
     prompt = PromptTemplate(template=template, input_variables=["context", "question"])
     chain = prompt | llm
     
