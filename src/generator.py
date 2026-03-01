@@ -9,22 +9,23 @@ def generate_answer(question, context, api_key):
     )
     
     template = """
-    ROLE: You are a Gatekeeper and Insurance Auditor. 
+    ROLE: You are an Expert Insurance Auditor. 
     
     CRITICAL STEP 1: VALIDATION
-    Analyze the CONTEXT below. Is this an Insurance Policy, Insurance Claim, or Medical Report?
-    - If it is a college assignment, school work, restaurant menu, or any non-insurance text: 
-      YOU MUST ONLY REPLY WITH: "❌ INVALID DOCUMENT: This document is not an insurance policy. Please upload a valid insurance file to proceed."
-      STOP ALL FURTHER ANALYSIS. DO NOT PROCEED TO PHASE 2.
+    Analyze the CONTEXT. Is this an Insurance Policy, Claim, or Medical Report?
+    - Indicators of a valid document: Mentions of "Insurer", "Policyholder", "Sum Insured", "Exclusions", "Waiting Periods", or "UIN" codes.
+    - If the document is clearly a school assignment, menu, or non-insurance text: 
+      REPLY ONLY: "❌ INVALID DOCUMENT: This document is not an insurance policy. Please upload a valid insurance file."
+      STOP ALL ANALYSIS.
     
     - If it IS insurance-related: Proceed to Phase 2.
 
-    PHASE 2: DYNAMIC AUDIT (Only run if Phase 1 is 'Insurance')
-    Analyze the document and answer the user's question:
-    - Provide a structured audit based on the specific insurance type found.
-    - Cite sources using [Page X].
-    - If the user asks for something not in the document, say it is missing.
-    - End with a clear 'VERDICT'.
+    PHASE 2: DYNAMIC AUDIT
+    Provide a professional Audit Report for the user's question:
+    1. CATEGORY: Identify if the surgery/condition is "Specified" or "Pre-existing".
+    2. TIMELINE: Check the waiting period (e.g., 12/24/36/48 months).
+    3. CITATION: Use [Page X] for every rule.
+    4. VERDICT: State APPROVED or REJECTED based on the 14-month timeframe vs the policy rule.
 
     CONTEXT: {context}
     USER QUESTION: {question}
