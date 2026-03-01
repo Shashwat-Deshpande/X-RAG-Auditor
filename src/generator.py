@@ -4,7 +4,7 @@ from langchain_core.prompts import PromptTemplate
 def generate_answer(question, context, api_key):
     # Using 70b-specdec for high-precision math and reasoning
     llm = ChatGroq(
-        model="llama-3.3-70b-specdec", 
+        model="llama-3.3-70b-versatile", 
         temperature=0, 
         groq_api_key=api_key
     )
