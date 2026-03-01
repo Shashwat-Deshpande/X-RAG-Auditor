@@ -6,18 +6,30 @@ def setup_retrieval(chunks):
     model_name = "BAAI/bge-small-en-v1.5"
     embeddings = HuggingFaceEmbeddings(
         model_name=model_name,
-        model_kwargs={'device': 'cpu'}, # Ensures compatibility with Streamlit Cloud
+        model_kwargs={'device': 'cpu'},
         encode_kwargs={'normalize_embeddings': True}
     )
     
-    # MMR is the gold standard for dense documents
-    # We increase k to 10 to give the 70B model more to work with
-    # fetch_k=30 gives MMR a larger pool to pick diverse chunks from
+    index_path = "faiss_index"
+    
+    # Check if we already have a saved index to save time/resources
+    if os.path.exists(index_path):
+        vector_db = FAISS.load_local(
+            index_path, 
+            embeddings, 
+            allow_dangerous_deserialization=True
+        )
+    else:
+        # If no index exists, create it from the provided chunks
+        vector_db = FAISS.from_documents(chunks, embeddings)
+        vector_db.save_local(index_path)
+    
+    # Return the retriever with the optimized MMR settings we discussed
     return vector_db.as_retriever(
         search_type="mmr", 
         search_kwargs={
             "k": 10, 
             "fetch_k": 30, 
-            "lambda_mult": 0.5 # 0.5 is the sweet spot for diversity vs relevance
+            "lambda_mult": 0.5
         }
     )
