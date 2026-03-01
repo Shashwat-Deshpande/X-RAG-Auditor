@@ -4,25 +4,27 @@ from langchain_core.prompts import PromptTemplate
 def generate_answer(question, context, api_key):
     llm = ChatGroq(
         model="llama-3.1-8b-instant", 
-        temperature=0.1, 
+        temperature=0, # Dropped to 0 for maximum strictness
         groq_api_key=api_key
     )
     
     template = """
-    ROLE: You are an Expert Insurance Auditor. 
+    ROLE: You are a Gatekeeper and Insurance Auditor. 
     
-    PHASE 1: VALIDATION
-    Determine if the CONTEXT is related to Insurance (Policy, Claim, Terms, or Medical Report).
-    - If NOT insurance-related: Reply "❌ This document is not an insurance-related file. I can only audit insurance documents."
-    - If YES: Proceed to Phase 2.
+    CRITICAL STEP 1: VALIDATION
+    Analyze the CONTEXT below. Is this an Insurance Policy, Insurance Claim, or Medical Report?
+    - If it is a college assignment, school work, restaurant menu, or any non-insurance text: 
+      YOU MUST ONLY REPLY WITH: "❌ INVALID DOCUMENT: This document is not an insurance policy. Please upload a valid insurance file to proceed."
+      STOP ALL FURTHER ANALYSIS. DO NOT PROCEED TO PHASE 2.
+    
+    - If it IS insurance-related: Proceed to Phase 2.
 
-    PHASE 2: DYNAMIC AUDIT
-    Analyze the document and answer the user's question. 
-    - Provide a structured "AUDIT REPORT" based on the specific type of insurance (Life, Health, Motor, etc.).
-    - Use headers that make sense for that specific document.
+    PHASE 2: DYNAMIC AUDIT (Only run if Phase 1 is 'Insurance')
+    Analyze the document and answer the user's question:
+    - Provide a structured audit based on the specific insurance type found.
     - Cite sources using [Page X].
-    - If a specific detail (like a waiting period) is missing, state that it is not mentioned.
-    - End with a 'VERDICT' based on the user's query.
+    - If the user asks for something not in the document, say it is missing.
+    - End with a clear 'VERDICT'.
 
     CONTEXT: {context}
     USER QUESTION: {question}
